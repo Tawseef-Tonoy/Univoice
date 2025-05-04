@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Profile | Univoice</title>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #F9FAFB;
+    }
+
+    .navbar-brand {
+      font-weight: bold;
+      color: #4F46E5 !important;
+    }
+
+    .post-card {
+      background-color: #FFFFFF;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      padding: 20px;
+      margin-bottom: 20px;
+      position: relative;
+    }
+
+    .profile-card {
+      background-color: #FFFFFF;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      padding: 20px;
+      margin-bottom: 30px;
+    }
+
+    .post-meta {
+      font-size: 0.9rem;
+      color: #6B7280;
+    }
+
+    .anonymous-badge {
+      font-size: 0.75rem;
+      background-color: #6B7280;
+      color: white;
+      padding: 0.25em 0.5em;
+      border-radius: 0.25rem;
+      margin-left: 0.5rem;
+    }
+
+    .toast-container {
+      z-index: 1050;
+    }
+
+    .toast {
+      opacity: 1 !important;
+      border: none;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      min-width: 250px;
+    }
+
+    .toast-body {
+      padding: 0.75rem 1rem;
+      display: flex;
+      align-items: center;
+    }
+
+    .toast .btn-close-white {
+      opacity: 0.8;
+    }
+
+    .toast .btn-close-white:hover {
+      opacity: 1;
+    }
+
+    .spinner-border-sm {
+      width: 1rem;
+      height: 1rem;
+      border-width: 0.2em;
+      margin-right: 0.5rem;
+    }
+    
+    .upvote-badge {
+      background-color: #4F46E5;
+      color: white;
+      padding: 0.25em 0.5em;
+      border-radius: 0.25rem;
+      font-size: 0.85rem;
+    }
+    
+    .comment-section {
+      margin-top: 15px;
+      padding-top: 15px;
+      border-top: 1px solid #E5E7EB;
+    }
+    
+    .comment {
+      padding: 10px;
+      background-color: #F3F4F6;
+      border-radius: 8px;
+      margin-bottom: 10px;
+    }
+    
+    .comment-meta {
+      font-size: 0.8rem;
+      color: #6B7280;
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm px-4">
+    <a class="navbar-brand" href="/">Univoice</a>
+    <div class="ms-auto d-flex align-items-center gap-3">
+      <span class="fw-semibold">{{ username }}</span>
+      <a href="/profile" class="btn btn-primary btn-sm">Profile</a>
+      <button id="logout" class="btn btn-outline-danger btn-sm">Logout</button>
+    </div>
+  </nav>
+
+  <div class="container py-5">
+    <h3 class="fw-semibold text-dark mb-4">User Profile</h3>
+    <div id="profile-container" class="profile-card mb-4">
+      <!-- Profile details will be loaded here -->
+    </div>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h4 class="fw-semibold text-dark">Your Posts</h4>
+      <a href="/new-post" class="btn btn-primary">+ New Post</a>
+    </div>
+    <div id="posts-container"></div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    const username = "{{ username }}";
+    const userRole = "{{ role }}";
+
+    function createToastContainer() {
+      const container = document.createElement('div');
+      container.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+      container.style.zIndex = '1050';
+      container.id = 'toastContainer';
+      document.body.appendChild(container);
+      return container;
+    }
+
+    function showToast(message, type = 'success') {
+      let container = document.getElementById('toastContainer');
+      if (!container) {
+        container = createToastContainer();
+      }
+      
+      const id = 'toast-' + Date.now();
+      const bgColor = type === 'success' ? 'bg-success' : type === 'error' ? 'bg-danger' : 'bg-primary';
+      const icon = type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle';
+      
+      const toastHtml = `
+        <div class="toast align-items-center ${bgColor} text-white border-0" role="alert" aria-live="assertive" aria-atomic="true" id="${id}">
+          <div class="d-flex">
+            <div class="toast-body">
+              <i class="fas ${icon} me-2"></i> ${message}
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+          </div>
+        </div>
+      `;
+      
+      container.insertAdjacentHTML('beforeend', toastHtml);
+      const toastElement = document.getElementById(id);
+      const toast = new bootstrap.Toast(toastElement, { delay: 3000 });
+      toast.show();
+      
+      toastElement.addEventListener('hidden.bs.toast', function() {
+        toastElement.remove();
+      });
+    }
+
+    function showLoadingSpinner(container) {
+      container.innerHTML = `
+        <div class="text-center py-5">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+          <p class="mt-2 text-muted">Loading content...</p>
+        </div>
+      `;
+    }
+
+    function createPostCard(post) {
+      const card = document.createElement("div");
+      card.classList.add("post-card");
+      card.dataset.id = post.post_id;
+      card.dataset.title = post.title;
+      card.dataset.content = post.content;
+      card.dataset.isAnonymous = post.is_anonymous;
+
+      let displayName = username;
+      
+      if (post.is_anonymous) {
+        if (userRole === "admin" || username === post.author) {
+          displayName = `${username} <span class="anonymous-badge">Anonymous</span>`;
+        } else {
+          displayName = "Anonymous";
+        }
+      }
+
+      // Generate comments HTML if there are any
+      let commentsHtml = '';
+      if (post.comments && post.comments.length > 0) {
+        let commentsList = '';
+        post.comments.forEach(comment => {
+          commentsList += `
+            <div class="comment">
+              <p class="mb-1">${comment.content}</p>
+              <small class="comment-meta">By <strong>${comment.author}</strong> • ${comment.time_ago}</small>
+            </div>
+          `;
+        });
+        
+        commentsHtml = `
+          <div class="comment-section">
+            <h6 class="fw-semibold mb-3">Comments (${post.comments.length})</h6>
+            ${commentsList}
+          </div>
+        `;
+      }
+
+      card.innerHTML = `
+        <h5 class="mb-2 fw-semibold">${post.title}</h5>
+        <p>${post.content}</p>
+        <div class="d-flex justify-content-between align-items-center mt-3">
+          <div>
+            <span class="upvote-badge"><i class="fas fa-arrow-up me-1"></i> ${post.upvotes}</span>
+          </div>
+          <small class="post-meta">Posted by <strong>${displayName}</strong> • ${post.time_ago}</small>
+        </div>
+        ${commentsHtml}
+      `;
+
+      return card;
+    }
+
+    async function loadProfile() {
+      const profileContainer = document.getElementById("profile-container");
+      const postsContainer = document.getElementById("posts-container");
+
+      showLoadingSpinner(profileContainer);
+      showLoadingSpinner(postsContainer);
+
+      try {
+        const response = await fetch(`/api/profile/${username}`);
+        
+        if (!response.ok) {
+          const error = await response.json();
+          profileContainer.innerHTML = `<p class="text-muted text-center py-5">${error.message}</p>`;
+          postsContainer.innerHTML = '';
+          showToast(error.message, "error");
+          return;
+        }
+
+        const data = await response.json();
+        const userInfo = data.user_info;
+        const posts = data.posts;
+
+        profileContainer.innerHTML = `
+          <div class="row">
+            <div class="col-md-8">
+              <h4 class="fw-semibold mb-3">${userInfo.name}</h4>
+              <p><strong>Username:</strong> ${userInfo.username}</p>
+              <p><strong>Email:</strong> ${userInfo.email}</p>
+              <p><strong>Role:</strong> ${userInfo.role.charAt(0).toUpperCase() + userInfo.role.slice(1)}</p>
+            </div>
+            <div class="col-md-4 text-md-end">
+              <button class="btn btn-outline-primary mb-2 w-100">Edit Profile</button>
+              <button class="btn btn-outline-secondary w-100">Change Password</button>
+            </div>
+          </div>
+        `;
+
+        postsContainer.innerHTML = "";
+        
+        if (posts.length === 0) {
+          postsContainer.innerHTML = `<p class="text-center text-muted py-5">You haven't posted any issues yet.</p>`;
+          return;
+        }
+
+        posts.forEach(post => {
+          const card = createPostCard(post);
+          postsContainer.appendChild(card);
+        });
+
+      } catch (err) {
+        console.error("Error loading profile:", err);
+        profileContainer.innerHTML = `<p class="text-center text-danger py-5">Failed to load profile. Please try again.</p>`;
+        postsContainer.innerHTML = '';
+        showToast("Failed to load profile", "error");
+      }
+    }
+
+    document.getElementById("logout").addEventListener("click", async () => {
+      const button = document.getElementById("logout");
+      const originalText = button.innerHTML;
+      
+      try {
+        button.disabled = true;
+        button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Logging out...';
+        
+        const response = await fetch('/api/logout', {
+          method: 'POST'
+        });
+        
+        if (response.ok) {
+          window.location.href = '/login';
+        } else {
+          throw new Error("Logout failed");
+        }
+      } catch (err) {
+        console.error("Error during logout:", err);
+        showToast("Logout failed. Please try again.", "error");
+        button.disabled = false;
+        button.innerHTML = originalText;
+      }
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+      createToastContainer();
+      loadProfile();
+    });
+  </script>
+</body>
+</html>

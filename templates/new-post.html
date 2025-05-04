@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+
+{% block title %}Create Post | Univoice{% endblock %}
+
+{% block styles %}
+<style>
+  .post-form-wrapper {
+    max-width: 720px;
+    margin: 0 auto;
+    background-color: #ffffff;
+    border-radius: 16px;
+    padding: 40px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+  }
+
+  .form-floating > label {
+    color: #6B7280;
+  }
+
+  .form-control {
+    border-radius: 12px;
+    background-color: #f9fafb;
+    border: 1px solid #e5e7eb;
+    padding: 1rem;
+    font-size: 1rem;
+  }
+
+  .form-control:focus {
+    border-color: #4F46E5;
+    box-shadow: 0 0 0 0.2rem rgba(79, 70, 229, 0.2);
+  }
+
+  textarea.form-control {
+    min-height: 300px !important;
+    height: 300px !important;
+    resize: vertical;
+    line-height: 1.6;
+  }
+
+  .btn-modern {
+    background-color: #4F46E5;
+    color: white;
+    transition: all 0.2s ease-in-out;
+    border-radius: 10px;
+  }
+
+  .btn-modern:hover {
+    background-color: #3730A3;
+  }
+
+  /* 🪄 Position toast top-right */
+  .toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1055;
+  }
+  
+  /* Anonymous checkbox styling */
+  .form-check-input:checked {
+    background-color: #4F46E5;
+    border-color: #4F46E5;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="post-form-wrapper">
+  <h4 class="mb-4 text-center text-primary fw-semibold">Create a New Post</h4>
+
+  <form id="new-post-form">
+    <div class="form-floating mb-4">
+      <input type="text" id="title" name="title" class="form-control" placeholder="Title" required />
+      <label for="title">Post Title</label>
+    </div>
+
+    <div class="form-floating mb-4">
+      <textarea id="content" name="content" class="form-control" placeholder="Write your issue..." required></textarea>
+      <label for="content">Post Content</label>
+    </div>
+    
+    <!-- Anonymous option -->
+    <div class="form-check mb-4">
+      <input class="form-check-input" type="checkbox" id="is-anonymous" name="is_anonymous">
+      <label class="form-check-label" for="is-anonymous">
+        Post anonymously
+        <small class="text-muted ms-2">(Your name will be hidden from other students)</small>
+      </label>
+    </div>
+
+    <div class="d-grid">
+      <button type="submit" class="btn btn-modern py-2">Submit Post</button>
+    </div>
+  </form>
+</div>
+
+<!-- 🪄 Toast Component -->
+<div class="toast-container">
+  <div id="toast" class="toast align-items-center text-bg-primary border-0" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="d-flex">
+      <div class="toast-body" id="toast-message">
+        <!-- Message goes here -->
+      </div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const username = "{{ username }}";
+  const userRole = "{{ role }}";
+
+  const toastElement = document.getElementById('toast');
+  const toastMessage = document.getElementById('toast-message');
+  const toastBootstrap = bootstrap.Toast.getOrCreateInstance(toastElement);
+
+  function showToast(message, color = "primary") {
+    toastElement.className = `toast align-items-center text-bg-${color} border-0`;
+    toastMessage.innerText = message;
+    toastBootstrap.show();
+  }
+
+  document.getElementById("new-post-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const data = {
+      username: username,
+      title: document.getElementById("title").value.trim(),
+      content: document.getElementById("content").value.trim(),
+      is_anonymous: document.getElementById("is-anonymous").checked
+    };
+
+    if (!data.title || !data.content) {
+      showToast("Please fill in both fields.", "danger");
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/new-post", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+
+      const result = await response.json();
+      if (!response.ok) {
+        showToast(result.message || "Failed to post.", "danger");
+        return;
+      }
+
+      showToast(result.message || "Post submitted!", "success");
+
+      // Optional: delay and redirect
+      setTimeout(() => {
+        window.location.href = "/home";
+      }, 1500);
+
+    } catch (err) {
+      console.error("Post submission error:", err);
+      showToast("Something went wrong. Please try again.", "danger");
+    }
+  });
+</script>
+{% endblock %}
+
