@@ -201,11 +201,36 @@ def has_user_upvoted(post_id, username):
     
     return has_upvoted(post_id, user_id)
 
+def update_post(post_id, new_title, new_content):
+    with engine.connect() as conn:
+        trans = conn.begin()
+        try:
+            query = text("""
+                UPDATE posts
+                SET title = :title,
+                    content = :content
+                WHERE id = :post_id
+            """)
+            conn.execute(query, {
+                "title": new_title,
+                "content": new_content,
+                "post_id": post_id
+            })
+            trans.commit()
+            print("Post updated successfully")
+            return True
+        except Exception as e:
+            trans.rollback()
+            print(" Failed to update post:", e)
+            return False
+
+#############################################
+######....TAWSEEF....##########
 def insert_comment(content, post_id, user_id):
     with engine.connect() as conn:
         trans = conn.begin()
         try : 
-            result = conn.execute(text("""
+            conn.execute(text("""
                 INSERT INTO comments (content, post_id, user_id)
                 VALUES (:content, :post_id, :user_id)
             """), { "content" : content,
@@ -235,30 +260,6 @@ def get_comments(post_id):
             comments.append(comment_dict)
 
         return comments
-    
-
-def update_post(post_id, new_title, new_content):
-    with engine.connect() as conn:
-        trans = conn.begin()
-        try:
-            query = text("""
-                UPDATE posts
-                SET title = :title,
-                    content = :content
-                WHERE id = :post_id
-            """)
-            conn.execute(query, {
-                "title": new_title,
-                "content": new_content,
-                "post_id": post_id
-            })
-            trans.commit()
-            print("Post updated successfully")
-            return True
-        except Exception as e:
-            trans.rollback()
-            print(" Failed to update post:", e)
-            return False
 
 
 def delete_post(post_id):
@@ -275,7 +276,7 @@ def delete_post(post_id):
             print("Failed to delete post:", e)
             return False   
         
-####TAWSEEF####       
+      
 def get_user_profile(username):
     with engine.connect() as conn:
         # 1. Get user information
