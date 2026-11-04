@@ -1,4 +1,5 @@
 from sqlalchemy import create_engine, text
+from sqlalchemy.engine import URL
 from dotenv import load_dotenv
 import os
 from pathlib import Path
@@ -6,7 +7,18 @@ from sqlalchemy.exc import SQLAlchemyError
 from utils import format_time_ago, helper_query
 from uuid import UUID
 load_dotenv()
-DATABASE_URL = os.getenv("DATABASE_URL")
+# Compose supplies separate fields so special characters in passwords are safe.
+DATABASE_URL = (
+    URL.create(
+        "mysql+pymysql",
+        username=os.environ["DB_USER"],
+        password=os.environ["DB_PASSWORD"],
+        host=os.environ["DB_HOST"],
+        port=int(os.getenv("DB_PORT", "3306")),
+        database=os.environ["DB_NAME"],
+    )
+    if os.getenv("DB_HOST") else os.getenv("DATABASE_URL")
+)
 
 
 # Use MySQL connection string format
@@ -107,7 +119,7 @@ def get_all_posts(status=None, sort="latest"):
 
 def get_post_by_id(post_id):
     try:
-        post_id = UUID(post_id)
+        post_id = str(UUID(post_id))
     except ValueError:
         print("Invalid UUID format:", post_id)
         return False

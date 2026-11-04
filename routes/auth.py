@@ -1,3 +1,4 @@
+import os
 from fastapi import APIRouter
 from schemas.user import UserCreate, UserLogin
 from fastapi.responses import JSONResponse, RedirectResponse
@@ -36,7 +37,7 @@ def login_user(user: UserLogin):
                 key="session",
                 value=token,
                 httponly=True,
-                secure=True,
+                secure=os.getenv("SESSION_COOKIE_SECURE", "true").lower() == "true",
                 samesite="Lax",
                 path="/",
                 max_age=60 * 60 * 24  

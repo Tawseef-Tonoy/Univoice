@@ -61,7 +61,7 @@ def get_post(post_id: str):
 @router.get("/api/upvote/check/{post_id}")
 def check_upvote(post_id: str, username: str = Query(...)):
     try:
-        post_id = UUID(post_id)
+        post_id = str(UUID(post_id))
     except ValueError:
         return JSONResponse(status_code=400, content={"message": "Invalid post ID"})
 
@@ -75,7 +75,7 @@ def check_upvote(post_id: str, username: str = Query(...)):
 @router.post("/api/upvote/{post_id}")
 def upvote_toggle(post_id: str, username: str = Query(...)):
     try:
-        post_id = UUID(post_id)
+        post_id = str(UUID(post_id))
     except ValueError:
         return JSONResponse(status_code=400, content={"message": "Invalid post ID"})
 
@@ -93,7 +93,7 @@ def upvote_toggle(post_id: str, username: str = Query(...)):
                            
 @router.post("/api/comment/{post_id}")
 def comment(comment : CommentBase):
-    post_id = UUID(comment.post_id)
+    post_id = str(UUID(comment.post_id))
     user_id = get_user_id(comment.username)
     if not user_id:
         return JSONResponse(status_code=404, content={"message": "User not found"})
@@ -118,7 +118,7 @@ def comment(comment : CommentBase):
 @router.get("/api/comments/{post_id}")
 def get_comments_by_post_id(post_id: str):
     try:
-        post_id = UUID(post_id)
+        post_id = str(UUID(post_id))
     except ValueError:
         return JSONResponse(status_code=400, content={"message": "Invalid post ID"})
 
@@ -132,7 +132,7 @@ def get_comments_by_post_id(post_id: str):
 @router.delete("/api/post/{post_id}")
 def delete_post_route(post_id: str):
     try:
-        post_id = UUID(post_id)
+        post_id = str(UUID(post_id))
     except ValueError:
         return JSONResponse(status_code=400, content={"message": "Invalid post ID"})
 
@@ -146,7 +146,7 @@ def delete_post_route(post_id: str):
 @router.put("/api/post/{post_id}")
 def update_post_route(post_id: str, post: PostUpdate):
     try:
-        post_id = UUID(post_id)
+        post_id = str(UUID(post_id))
     except ValueError:
         return JSONResponse(status_code=400, content={"message": "Invalid post ID"})
     

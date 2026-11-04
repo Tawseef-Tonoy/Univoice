@@ -94,11 +94,13 @@ def display_profile_page(request: Request):
         )
     except Exception as e:
         print(f"Session decode error: {e}")
-        return RedirectResponse("/login")    
-    
+        return RedirectResponse("/login")
 
 
-
-    
-
-
+@app.get("/health")
+def health():
+    from database import engine
+    from sqlalchemy import text
+    with engine.connect() as conn:
+        conn.execute(text("SELECT 1 FROM users LIMIT 1"))
+    return {"status": "ok"}
