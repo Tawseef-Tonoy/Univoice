@@ -1,4 +1,5 @@
 from sqlalchemy import create_engine, text
+from sqlalchemy.engine import URL
 from dotenv import load_dotenv
 import os
 from pathlib import Path
@@ -6,7 +7,18 @@ from sqlalchemy.exc import SQLAlchemyError
 from utils import format_time_ago, helper_query
 from uuid import UUID
 load_dotenv()
-DATABASE_URL = os.getenv("DATABASE_URL")
+# Compose supplies separate fields so special characters in passwords are safe.
+DATABASE_URL = (
+    URL.create(
+        "mysql+pymysql",
+        username=os.environ["DB_USER"],
+        password=os.environ["DB_PASSWORD"],
+        host=os.environ["DB_HOST"],
+        port=int(os.getenv("DB_PORT", "3306")),
+        database=os.environ["DB_NAME"],
+    )
+    if os.getenv("DB_HOST") else os.getenv("DATABASE_URL")
+)
 
 
 # Use MySQL connection string format
@@ -107,7 +119,7 @@ def get_all_posts(status=None, sort="latest"):
 
 def get_post_by_id(post_id):
     try:
-        post_id = UUID(post_id)
+        post_id = str(UUID(post_id))
     except ValueError:
         print("Invalid UUID format:", post_id)
         return False
@@ -201,11 +213,36 @@ def has_user_upvoted(post_id, username):
     
     return has_upvoted(post_id, user_id)
 
+def update_post(post_id, new_title, new_content):
+    with engine.connect() as conn:
+        trans = conn.begin()
+        try:
+            query = text("""
+                UPDATE posts
+                SET title = :title,
+                    content = :content
+                WHERE id = :post_id
+            """)
+            conn.execute(query, {
+                "title": new_title,
+                "content": new_content,
+                "post_id": post_id
+            })
+            trans.commit()
+            print("Post updated successfully")
+            return True
+        except Exception as e:
+            trans.rollback()
+            print(" Failed to update post:", e)
+            return False
+
+#############################################
+######....TAWSEEF....##########
 def insert_comment(content, post_id, user_id):
     with engine.connect() as conn:
         trans = conn.begin()
         try : 
-            result = conn.execute(text("""
+            conn.execute(text("""
                 INSERT INTO comments (content, post_id, user_id)
                 VALUES (:content, :post_id, :user_id)
             """), { "content" : content,
@@ -235,30 +272,6 @@ def get_comments(post_id):
             comments.append(comment_dict)
 
         return comments
-    
-
-def update_post(post_id, new_title, new_content):
-    with engine.connect() as conn:
-        trans = conn.begin()
-        try:
-            query = text("""
-                UPDATE posts
-                SET title = :title,
-                    content = :content
-                WHERE id = :post_id
-            """)
-            conn.execute(query, {
-                "title": new_title,
-                "content": new_content,
-                "post_id": post_id
-            })
-            trans.commit()
-            print("Post updated successfully")
-            return True
-        except Exception as e:
-            trans.rollback()
-            print(" Failed to update post:", e)
-            return False
 
 
 def delete_post(post_id):
@@ -275,7 +288,7 @@ def delete_post(post_id):
             print("Failed to delete post:", e)
             return False   
         
-####TAWSEEF####       
+      
 def get_user_profile(username):
     with engine.connect() as conn:
         # 1. Get user information

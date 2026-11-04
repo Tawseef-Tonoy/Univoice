@@ -1,8 +1,25 @@
-# Ignore environment files
+# Local credentials and environment configuration
 .env
+.env.*
 *.env
+!.env.docker.example
 
-# Ignore virtual environment folders (like venv, env, .env, etc.)
-env/
+# Python environments, bytecode, and tool output
 venv/
+.venv/
+env/
 *.env/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+*.log
+
+# Local database backups and smoke-test credentials
+backup*.sql
+*smoke-state*.json
+
+# OS metadata
+.DS_Store
